@@ -1,6 +1,5 @@
 @using Ur.Data;
-
-<h1>Game of Ur</h1>
+@inject Ur.Data.GameRepo repo;
 
 <p role="status">@game.Status</p>
 <p>Active Player: @game.ActivePlayer.PieceColor</p>
@@ -24,6 +23,19 @@
 </center>
 
 @code {
+
+    Game game;
+
+    string gameId = "";
+    [ParameterAttribute]
+    public string GameId { 
+        get => gameId;
+        set {
+            gameId = value;
+            game = repo.FindGame(gameId);
+            StateHasChanged();
+        }
+    }
 
     class Tile {
         public int Column;
@@ -60,9 +72,6 @@
         new Tile { Column = 3, Row = 7, Rosette = true  },
     };
 
-    Game game = new Game();
-
-    
 
     private void IncrementCount()
     {

@@ -1,5 +1,23 @@
 ﻿@using Ur.Components
 @page "/"
+@inject Ur.Data.GameRepo repo;
+@inject NavigationManager NavigationManager;
 
-<GameBoard />
+<h1>Games!</h1>
 
+<button class="btn btn-primary" @onclick="HandleNewGame">New Game</button>
+
+<ul>
+@foreach (var game in repo.AllGames) {
+    <li>
+        <a href="/game/@game.Id">@game.Id</a>
+    </li>
+}
+</ul>
+
+@code {
+    void HandleNewGame() {
+        var game = repo.NewGame();
+        NavigationManager.NavigateTo("/game/" + game.Id);
+    }
+}

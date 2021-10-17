@@ -8,7 +8,7 @@ using System.Linq;
 namespace Ur.Data {
 
     class GameObject : INotifyPropertyChanged {
-        public Guid Id { get; set; }
+        public string Id { get; } = Guid.NewGuid().ToString();
 
         public event PropertyChangedEventHandler? PropertyChanged;
         protected virtual void OnPropertyChanged(string propertyName) {
@@ -86,6 +86,7 @@ namespace Ur.Data {
             {
                 pieces[i] = new GamePiece(Players[i / 7], i % 7);
             }
+            rolledPlacesToMove = random.Next(5);
         }
 
         string status = "";
