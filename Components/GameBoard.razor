@@ -1,8 +1,10 @@
 @using Ur.Data;
 
-<h1>Game of Ur #@(game.Id)</h1>
+<h1>Game of Ur</h1>
 
-<p role="status">@status</p>
+<p role="status">@game.Status</p>
+<p>Active Player: @game.ActivePlayer.PieceColor</p>
+<p>Rolled: @game.RolledPlacesToMove</p>
 
 <center>
 <div class="gameboard"
@@ -11,7 +13,7 @@
     @foreach (var tile in tiles) {
         <div class="tile @(tile.Rosette?"rosette":"")" 
             style="left:@(tileSize*tile.Column)px;top:@(tileSize*tile.Row)px;height:@(tileSize)px;width:@(tileSize)px"
-            @onclick=@(x => HandleClickedTile(tile))>&nbsp;</div> 
+            >@tile.Column, @tile.Row</div> 
     }
     @foreach (var piece in game.Pieces) {
         <div class="piece piece-@(piece.Color)" 
@@ -22,8 +24,6 @@
 </center>
 
 @code {
-
-    string status = "Ready";
 
     class Tile {
         public int Column;
@@ -62,18 +62,24 @@
 
     Game game = new Game();
 
+    
+
     private void IncrementCount()
     {
         currentCount++;
     }
 
-    private void HandleClickedTile(Tile tile)
+    private async void HandleClickedPiece(GamePiece piece)
     {
-        status = $"Clicked tile! c={tile.Column}, r={tile.Row}";
+        await game.MovePieceAsync(piece);
     }
 
-    private void HandleClickedPiece(GamePiece piece)
+    protected override Task OnInitializedAsync()
     {
-        status = $"Clicked piece! c={piece.Position.Column}, r={piece.Position.Row}";
+        game.PropertyChanged += (sender, args) =>
+        {
+            StateHasChanged();
+        };
+        return base.OnInitializedAsync();
     }
 }
