@@ -85,9 +85,9 @@
 
     protected override Task OnInitializedAsync()
     {
-        game.PropertyChanged += (sender, args) =>
+        game.PropertyChanged += async (sender, args) =>
         {
-            StateHasChanged();
+            await InvokeAsync(StateHasChanged);
         };
         return base.OnInitializedAsync();
     }

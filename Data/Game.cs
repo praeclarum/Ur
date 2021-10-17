@@ -79,6 +79,8 @@ namespace Ur.Data {
             }
         }
         readonly Random random = new Random();
+        public DateTimeOffset StartTime { get; } = DateTimeOffset.Now;
+        
         public Game()
         {
             pieces = new GamePiece[7 * Players.Length];

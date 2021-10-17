@@ -1,10 +1,15 @@
 @page "/game/{GameId}"
+@inject Ur.Data.GameRepo repo;
 
-<h1>Game @GameId</h1>
+<h1>Game of Ur</h1>
+
+<p>Started: @game?.StartTime</p>
 
 <GameBoard GameId=@GameId />
 
 @code {
+    Ur.Data.Game? game => repo.FindGame(GameId);
+
     [ParameterAttribute]
     public string GameId { get; set; }
 }
