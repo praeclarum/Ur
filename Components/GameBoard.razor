@@ -1,16 +1,79 @@
-<h1>Counter</h1>
+@using Ur.Data;
 
-<p>I'm the UR</p>
+<h1>Game of Ur #@(game.Id)</h1>
 
-<p role="status">Current count: @currentCount</p>
+<p role="status">@status</p>
 
-<button class="btn btn-primary" @onclick="IncrementCount">Click me</button>
+<center>
+<div class="gameboard"
+     style="width:@(gameBoardWidth)px;height:@(gameBoardHeight)px"
+     >
+    @foreach (var tile in tiles) {
+        <div class="tile @(tile.Rosette?"rosette":"")" 
+            style="left:@(tileSize*tile.Column)px;top:@(tileSize*tile.Row)px;height:@(tileSize)px;width:@(tileSize)px"
+            @onclick=@(x => HandleClickedTile(tile))>&nbsp;</div> 
+    }
+    @foreach (var piece in game.Pieces) {
+        <div class="piece piece-@(piece.Color)" 
+             style="left:@(tileSize*piece.Position.Column)px;top:@(tileSize*piece.Position.Row)px;height:@(tileSize)px;width:@(tileSize)px"
+             @onclick=@(x => HandleClickedPiece(piece))>&nbsp;</div> 
+    }
+</div>
+</center>
 
 @code {
+
+    string status = "Ready";
+
+    class Tile {
+        public int Column;
+        public int Row;
+        public bool Rosette;
+    }
+
     private int currentCount = 0;
+
+    int tileSize = 100;
+    int gameBoardWidth => 5 * tileSize;
+    int gameBoardHeight => 8 * tileSize;
+
+    private Tile[] tiles = {
+        new Tile { Column = 1, Row = 0 },
+        new Tile { Column = 2, Row = 0 },
+        new Tile { Column = 3, Row = 0 },
+        new Tile { Column = 1, Row = 1, Rosette = true },
+        new Tile { Column = 2, Row = 1 },
+        new Tile { Column = 3, Row = 1, Rosette = true },
+        new Tile { Column = 2, Row = 2 },
+        new Tile { Column = 2, Row = 3 },
+        new Tile { Column = 1, Row = 4 },
+        new Tile { Column = 2, Row = 4, Rosette = true  },
+        new Tile { Column = 3, Row = 4 },
+        new Tile { Column = 1, Row = 5 },
+        new Tile { Column = 2, Row = 5 },
+        new Tile { Column = 3, Row = 5 },
+        new Tile { Column = 1, Row = 6 },
+        new Tile { Column = 2, Row = 6 },
+        new Tile { Column = 3, Row = 6 },
+        new Tile { Column = 1, Row = 7, Rosette = true  },
+        new Tile { Column = 2, Row = 7 },
+        new Tile { Column = 3, Row = 7, Rosette = true  },
+    };
+
+    Game game = new Game();
 
     private void IncrementCount()
     {
         currentCount++;
+    }
+
+    private void HandleClickedTile(Tile tile)
+    {
+        status = $"Clicked tile! c={tile.Column}, r={tile.Row}";
+    }
+
+    private void HandleClickedPiece(GamePiece piece)
+    {
+        status = $"Clicked piece! c={piece.Position.Column}, r={piece.Position.Row}";
     }
 }
