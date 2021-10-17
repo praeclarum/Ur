@@ -7,10 +7,10 @@
 
 <button class="btn btn-primary" @onclick="HandleNewGame">New Game</button>
 
-<ul>
-@foreach (var game in repo.AllGames) {
+<ul style="margin-top:2em">
+@foreach (var game in repo.AllGames.OrderByDescending(x => x.StartTime)) {
     <li>
-        <a href="/game/@game.Id">@game.Id</a>
+        <a href="/game/@game.Id">Active Game: @game.StartTime</a>
     </li>
 }
 </ul>
