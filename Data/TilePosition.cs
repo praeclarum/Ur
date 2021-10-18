@@ -16,6 +16,10 @@ namespace Ur.Data
                 (t.Column == 2 && t.Row == 4);
         }
 
+        public static bool IsEnd(this ITilePosition t) {
+            return (t.Column == 1 || t.Column == 3) && (t.Row == 2);
+        }
+
         public static int GetProgress(this ITilePosition t) => (t.Column, t.Row) switch {
                 (0, _) => -1,
                 (4, _) => -1,

@@ -68,10 +68,17 @@ a, .btn-link {
     background-color: rgb(254, 238, 159);
     position: absolute;
     border: solid 1px #2a2a2a;
+    padding-top: 1.5em;
 }
 
 .rosette {
     background-color: rgb(255, 165, 165);
+}
+
+.end {
+    background-color: transparent;
+    border: none;
+    opacity: 50%;
 }
 
 .piece {

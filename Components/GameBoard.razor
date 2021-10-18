@@ -10,14 +10,17 @@
      style="width:@(gameBoardWidth)px;height:@(gameBoardHeight)px"
      @ref="gameboard">
     @foreach (var tile in tiles) {
-        <div class="tile @(tile.IsRosette()?"rosette":"")" 
+        var rosetteClass = tile.IsRosette()?"rosette":"";
+        var endClass = tile.IsEnd()?"end":"";
+        var title = tile.IsEnd()?"End":tile.GetProgress().ToString();
+        <div class="tile @(rosetteClass) @(endClass)" 
             style="left:@(tileSize*tile.Column)px;top:@(tileSize*tile.Row)px;height:@(tileSize)px;width:@(tileSize)px"
-            >@tile.Column, @tile.Row<br/>@tile.GetProgress()</div> 
+            >@title</div> 
     }
     @foreach (var piece in Game.Pieces) {
         if (piece.IsOut) continue;
         <div class="piece piece-@(piece.Color)" 
-             style="left:@(tileSize*piece.Position.Column)px;top:@(tileSize*piece.Position.Row)px;height:@(tileSize)px;width:@(tileSize)px"
+             style="left:@(tileSize*piece.Position.Column+piecePad)px;top:@(tileSize*piece.Position.Row+piecePad)px;height:@(pieceSize)px;width:@(pieceSize)px"
              @onclick=@(x => HandleClickedPiece(piece))>&nbsp;</div> 
     }
 </div>
@@ -37,6 +40,8 @@
     private int currentCount = 0;
 
     int tileSize = 80;
+    int piecePad = 8;
+    int pieceSize => tileSize - piecePad * 2;
     int gameBoardWidth => 5 * tileSize;
     int gameBoardHeight => 8 * tileSize;
 
@@ -60,9 +65,10 @@
         new Tile { Column = 3, Row = 6 },
         new Tile { Column = 1, Row = 7  },
         new Tile { Column = 2, Row = 7 },
-        new Tile { Column = 3, Row = 7  },
+        new Tile { Column = 3, Row = 7 },
+        new Tile { Column = 1, Row = 2 },
+        new Tile { Column = 3, Row = 2 },
     };
-
 
     private void IncrementCount()
     {
