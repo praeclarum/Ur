@@ -24,6 +24,11 @@
             <span class="roll">&nbsp</span>
         }
         </div>
+        @if (!Player.HasUser) {
+            <div>
+                <button class="btn btn-primary" @onclick="UseAI">Play against AI</button>
+            </div>
+        }
     </center>
 </div>
 
@@ -35,4 +40,9 @@
     public Player Player { get; set; }
 
     string activeClass => Game.ActivePlayerIndex == Player.Index ? "active" : "";
+
+    async Task UseAI() {
+        Player.IsAI = true;
+        await Game.StartGameAsync();
+    }
 }

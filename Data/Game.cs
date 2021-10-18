@@ -19,7 +19,15 @@ namespace Ur.Data
 
     public class Game : GameObject
     {
-        public string Title { get; set; } = "";
+        public string Title
+        {
+            get => title;
+            set
+            {
+                title = value;
+                OnPropertyChanged(nameof(Title));
+            }
+        }
         public Player[] Players { get; } = new Player[2] {
             new Player(0),
             new Player(1) { PieceColor = "black" }
@@ -57,7 +65,10 @@ namespace Ur.Data
             {
                 pieces[i] = new GamePiece(Players[i / 7], i % 7);
             }
-            Roll();
+            while (rolledPlacesToMove == 0)
+            {
+                Roll();
+            }
         }
 
         string status = "";
@@ -92,7 +103,8 @@ namespace Ur.Data
 
             var (movement, newPosition) = GetPieceMovement(piece);
 
-            switch (movement) {
+            switch (movement)
+            {
                 case Movement.NoNotTurn:
                     piece.Player.GameMessage = "Not your turn!";
                     return;
@@ -118,16 +130,18 @@ namespace Ur.Data
                         piece.Player.GameMessage = "You win!";
                         GameOver(piece.Player);
                     }
-                    else {
+                    else
+                    {
                         ActivePlayerIndex = (ActivePlayerIndex + 1) % Players.Length;
-                        await NextTurnAsync ();
+                        await NextTurnAsync();
                     }
                     return;
             }
 
             var newProgress = piece.Position.GetProgress() + RolledPlacesToMove;
 
-            if (movement == Movement.OKCapture) {
+            if (movement == Movement.OKCapture)
+            {
                 var capturedPiece = FindPieceAt(newPosition);
                 if (capturedPiece != null)
                 {
@@ -135,15 +149,18 @@ namespace Ur.Data
                     capturedPiece.Position = new TilePosition(capturedPiece.Player.OutsideColumn,
                                                                 1 + capturedPiece.PieceIndex);
                 }
-            }            
-            else {
+            }
+            else
+            {
                 piece.Player.GameMessage = "";
             }
             piece.Position = newPosition;
-            if (piece.Position.IsRosette()) {
+            if (piece.Position.IsRosette())
+            {
                 await NextTurnAsync($"You get another turn!");
             }
-            else {
+            else
+            {
                 ActivePlayerIndex = (ActivePlayerIndex + 1) % Players.Length;
                 await NextTurnAsync();
             }
@@ -159,7 +176,8 @@ namespace Ur.Data
             };
         }
 
-        enum Movement {
+        enum Movement
+        {
             NoNotTurn = 0,
             NoCantMove = 1,
             NoOccupied = 2,
@@ -183,10 +201,11 @@ namespace Ur.Data
             var newProgress = piece.Position.GetProgress() + RolledPlacesToMove;
             var newPosition = TilePosition.FromProgress(newProgress, piece.Player) ?? piece.Position;
 
-            if (newProgress == 14) {
+            if (newProgress == 14)
+            {
                 return (Movement.OKScore, newPosition);
             }
-            
+
             if (newPosition == piece.Position)
             {
                 return (Movement.NoCantMove, newPosition);
@@ -200,10 +219,12 @@ namespace Ur.Data
             var capturedPiece = FindPieceAt(newPosition);
             if (capturedPiece != null && capturedPiece.Player != piece.Player)
             {
-                if (newPosition.IsRosette()) {
+                if (newPosition.IsRosette())
+                {
                     return (Movement.NoRosette, newPosition);
                 }
-                else {
+                else
+                {
                     return (Movement.OKCapture, newPosition);
                 }
             }
@@ -229,8 +250,9 @@ namespace Ur.Data
             {
                 if (piece.Player != player || piece.IsOut)
                     continue;
-                if (CanMovePiece(piece)) {
-                    return true;                
+                if (CanMovePiece(piece))
+                {
+                    return true;
                 }
             }
             return false;
@@ -241,6 +263,20 @@ namespace Ur.Data
             return pieces.FirstOrDefault(p => p.Position == position);
         }
 
+        bool started = false;
+        private string title = "";
+
+        public async Task StartGameAsync()
+        {
+            if (started)
+                return;
+            if (Players.Any(x => !x.HasUser))
+                return;
+            started = true;
+            Title = $"{Players[0].InitialUserName} vs. {Players[1].InitialUserName}";
+            await NextTurnAsync();
+        }
+
         async Task NextTurnAsync(string message = "")
         {
             ActivePlayer.GameMessage = message;
@@ -248,10 +284,12 @@ namespace Ur.Data
 
             while (RolledPlacesToMove == 0 || !CanMovePiece())
             {
-                if (RolledPlacesToMove == 0) {
+                if (RolledPlacesToMove == 0)
+                {
                     ActivePlayer.GameMessage = "Rolled 0, no move.";
                 }
-                else {
+                else
+                {
                     ActivePlayer.GameMessage = "No pieces can move.";
                 }
                 await Task.Delay(2000);
@@ -259,15 +297,40 @@ namespace Ur.Data
                 ActivePlayer.GameMessage = "";
                 await RollAsync();
             }
+
+            if (!EndTime.HasValue && ActivePlayer.IsAI)
+            {
+                await AIMoveAsync();
+            }
         }
 
-        async Task RollAsync() {
+        async Task AIMoveAsync()
+        {
+            await Task.Delay(500 + random.Next(1000));
+            var player = ActivePlayer;
+            var pieces =
+                (from p in Pieces
+                 where !p.IsOut && p.Player == player
+                 let m = GetPieceMovement(p)
+                 where (int)m.Item1 >= 100
+                 select p).ToList();
+            if (pieces.Count == 0)
+                return;
+            var piece = (random.Next(2) == 0) ?
+                pieces.OrderByDescending(p => p.Position.GetProgress()).First() :
+                pieces[random.Next(pieces.Count)];
+            await MovePieceAsync(piece);
+        }
+
+        async Task RollAsync()
+        {
             RolledPlacesToMove = -1;
             await Task.Delay(250 + random.Next(1000));
             Roll();
         }
 
-        void Roll() {
+        void Roll()
+        {
             var d0 = random.Next(2);
             var d1 = random.Next(2);
             var d2 = random.Next(2);
