@@ -12,15 +12,15 @@
     @foreach (var tile in tiles) {
         var rosetteClass = tile.IsRosette()?"rosette":"";
         var endClass = tile.IsEnd()?"end":"";
-        var title = tile.IsEnd()?"End":tile.GetProgress().ToString();
+        var title = tile.IsEnd()?"Finish":tile.GetProgress().ToString();
         <div class="tile @(rosetteClass) @(endClass)" 
             style="left:@(tileSize*tile.Column)px;top:@(tileSize*tile.Row)px;height:@(tileSize)px;width:@(tileSize)px"
             >@title</div> 
     }
     @foreach (var piece in Game.Pieces) {
-        if (piece.IsOut) continue;
         <div class="piece piece-@(piece.Color)" 
              style="left:@(tileSize*piece.Position.Column+piecePad)px;top:@(tileSize*piece.Position.Row+piecePad)px;height:@(pieceSize)px;width:@(pieceSize)px"
+             hidden=@(piece.IsOut)
              @onclick=@(x => HandleClickedPiece(piece))>&nbsp;</div> 
     }
 </div>

@@ -127,7 +127,7 @@ namespace Ur.Data
                     piece.Player.Score++;
                     if (piece.Player.Score == 7)
                     {
-                        piece.Player.GameMessage = "You win!";
+                        piece.Player.GameMessage = "Winner!";
                         GameOver(piece.Player);
                     }
                     else
@@ -234,13 +234,7 @@ namespace Ur.Data
 
         bool CanMovePiece(GamePiece piece)
         {
-            return GetPieceMovement(piece).Item1 switch
-            {
-                Movement.OK => true,
-                Movement.OKCapture => true,
-                Movement.OKScore => true,
-                _ => false
-            };
+            return (int)GetPieceMovement(piece).Item1 >= (int)Movement.OK;
         }
 
         bool CanMovePiece()
