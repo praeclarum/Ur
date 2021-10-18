@@ -1,20 +1,21 @@
 @using Ur.Data;
 @inject Ur.Data.GameRepo repo;
 
-<p role="status">@game.Status</p>
-<p>Active Player: @game.ActivePlayer.PieceColor</p>
-<p>Rolled: @game.RolledPlacesToMove</p>
-
 <center>
+    <div class="playerscores">
+        <PlayerScore Game=@Game Player=@Game.Players[0] />
+        <PlayerScore Game=@Game Player=@Game.Players[1] />
+    </div>
 <div class="gameboard"
      style="width:@(gameBoardWidth)px;height:@(gameBoardHeight)px"
      >
     @foreach (var tile in tiles) {
         <div class="tile @(tile.Rosette?"rosette":"")" 
             style="left:@(tileSize*tile.Column)px;top:@(tileSize*tile.Row)px;height:@(tileSize)px;width:@(tileSize)px"
-            >@tile.Column, @tile.Row</div> 
+            >@tile.Column, @tile.Row<br/>@tile.GetProgress()</div> 
     }
-    @foreach (var piece in game.Pieces) {
+    @foreach (var piece in Game.Pieces) {
+        if (piece.IsOut) continue;
         <div class="piece piece-@(piece.Color)" 
              style="left:@(tileSize*piece.Position.Column)px;top:@(tileSize*piece.Position.Row)px;height:@(tileSize)px;width:@(tileSize)px"
              @onclick=@(x => HandleClickedPiece(piece))>&nbsp;</div> 
@@ -23,29 +24,18 @@
 </center>
 
 @code {
+    [Parameter]
+    public Game Game { get; set; }
 
-    Game game;
-
-    string gameId = "";
-    [ParameterAttribute]
-    public string GameId { 
-        get => gameId;
-        set {
-            gameId = value;
-            game = repo.FindGame(gameId);
-            StateHasChanged();
-        }
-    }
-
-    class Tile {
-        public int Column;
-        public int Row;
+    class Tile : ITilePosition {
+        public int Column { get; set; }
+        public int Row { get; set; }
         public bool Rosette;
     }
 
     private int currentCount = 0;
 
-    int tileSize = 100;
+    int tileSize = 80;
     int gameBoardWidth => 5 * tileSize;
     int gameBoardHeight => 8 * tileSize;
 
@@ -80,15 +70,17 @@
 
     private async void HandleClickedPiece(GamePiece piece)
     {
-        await game.MovePieceAsync(piece);
+        await Game.MovePieceAsync(piece);
     }
 
-    protected override Task OnInitializedAsync()
+    protected override Task OnAfterRenderAsync (bool firstRender)
     {
-        game.PropertyChanged += async (sender, args) =>
-        {
-            await InvokeAsync(StateHasChanged);
-        };
-        return base.OnInitializedAsync();
+        if (firstRender) {
+            Game.PropertyChanged += async (sender, args) =>
+            {
+                await InvokeAsync(StateHasChanged);
+            };
+        }
+        return base.OnAfterRenderAsync(firstRender);
     }
 }

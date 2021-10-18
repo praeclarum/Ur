@@ -1,23 +1,36 @@
 ﻿@using Ur.Components
 @page "/"
-@inject Ur.Data.GameRepo repo;
-@inject NavigationManager NavigationManager;
+@inject Ur.Data.GameRepo repo
+@inject Ur.Data.UserRepo urepo
+@inject NavigationManager NavigationManager
+@using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
+@inject ProtectedSessionStorage ProtectedSessionStore
 
-<h1>Games!</h1>
+<h1>Game of Ur</h1>
 
-<button class="btn btn-primary" @onclick="HandleNewGame">New Game</button>
-
-<ul style="margin-top:2em">
-@foreach (var game in repo.AllGames.OrderByDescending(x => x.StartTime)) {
+<h2 style="margin-top:2em">Pending Games</h2>
+<ul>
+@foreach (var game in repo.PendingGames.OrderBy(x => x.ActiveTime)) {
+    var now = DateTimeOffset.Now;
+    var time = now - game.ActiveTime;
+    var timeStr = $"{time.TotalMinutes:0} minutes ago";
     <li>
-        <a href="/game/@game.Id">Active Game: @game.StartTime</a>
+        <a href="/game/@game.Id">@game.Title (@timeStr)</a>
+    </li>
+}
+</ul>
+
+<h2 style="margin-top:2em">Active Games</h2>
+<ul>
+@foreach (var game in repo.ActiveGames.OrderByDescending(x => x.ActiveTime)) {
+    var now = DateTimeOffset.Now;
+    var time = now - game.ActiveTime;
+    var timeStr = $"{time.TotalMinutes:0} minutes ago";
+    <li>
+        <a href="/game/@game.Id">@game.Title (@timeStr)</a>
     </li>
 }
 </ul>
 
 @code {
-    void HandleNewGame() {
-        var game = repo.NewGame();
-        NavigationManager.NavigateTo("/game/" + game.Id);
-    }
 }

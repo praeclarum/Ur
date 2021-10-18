@@ -7,7 +7,7 @@ using System.Linq;
 using System.ComponentModel;
 
 namespace Ur.Data {
-    class GameRepo : INotifyPropertyChanged {
+    public class GameRepo : INotifyPropertyChanged {
         readonly ConcurrentDictionary<string, Game> games = new();
 
         public event PropertyChangedEventHandler? PropertyChanged;
@@ -16,14 +16,18 @@ namespace Ur.Data {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
 
-        public Game NewGame() {
+        public Game NewGame(User user, int playerIndex) {
             var game = new Game();
+            game.Players[playerIndex].UserId = user.Id;
+            game.Title = playerIndex == 0 ? $"{user.Name} vs ?" : $"? vs {user.Name}";
             games.TryAdd(game.Id, game);
             OnPropertyChanged(nameof(AllGames));
             return game;
         }
 
         public Game[] AllGames => games.Values.ToArray();
+        public Game[] ActiveGames => games.Values.Where(x => x.IsActive).ToArray();
+        public Game[] PendingGames => games.Values.Where(x => x.IsPendingPlayer).ToArray();
 
         public Game? FindGame(string id) {
             return games.TryGetValue(id, out var game) ? game : null;

@@ -1,0 +1,52 @@
+@page "/new"
+@inject Ur.Data.GameRepo repo
+@inject Ur.Data.UserRepo urepo
+@inject NavigationManager NavigationManager
+@using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
+@inject ProtectedSessionStorage ProtectedSessionStore
+
+<h1>New Game</h1>
+
+<input value="@UserName" placeholder="Player Name" @onchange="args => UserName = args.Value?.ToString()" />
+
+<p style="margin-top:1em">
+    <button class="btn btn-primary" disabled=@(string.IsNullOrEmpty(UserName)) @onclick="x => HandleNewGame(0)">New Game as White</button>
+    <button class="btn btn-primary" disabled=@(string.IsNullOrEmpty(UserName)) @onclick="x => HandleNewGame(1)">New Game as Black</button>
+</p>
+
+
+@code {
+    private string UserName = "Anonymous";
+    private string UserId = "";
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        await base.OnAfterRenderAsync(firstRender);
+        if (firstRender)
+        {
+            UserId = (await ProtectedSessionStore.GetAsync<string>("UserId")).Value ?? "";
+            UserName = (await ProtectedSessionStore.GetAsync<string>("UserName")).Value ?? "Anonymous";
+            StateHasChanged();
+        }
+    }
+
+    private async Task SaveUserName() {
+        await ProtectedSessionStore.SetAsync("UserName", UserName);
+        await ProtectedSessionStore.SetAsync("UserId", UserId);
+    }
+
+    async Task HandleNewGame(int playerIndex) {
+        if (!string.IsNullOrEmpty(UserName)) {
+            var user = string.IsNullOrEmpty(UserId) ? 
+                urepo.NewUser(UserName) : 
+                (urepo.FindUser(UserId) ?? urepo.NewUser(UserName));
+            user.Name = UserName;
+            UserId = user.Id;
+            await SaveUserName();
+            if (user != null) {
+                var game = repo.NewGame(user, playerIndex);
+                NavigationManager.NavigateTo("/game/" + game.Id);
+            }
+        }
+    }
+}

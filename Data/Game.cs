@@ -5,9 +5,10 @@ using System.ComponentModel;
 using System.Threading.Tasks;
 using System.Linq;
 
-namespace Ur.Data {
+namespace Ur.Data
+{
 
-    class GameObject : INotifyPropertyChanged {
+    public class GameObject : INotifyPropertyChanged {
         public string Id { get; } = Guid.NewGuid().ToString();
 
         public event PropertyChangedEventHandler? PropertyChanged;
@@ -16,55 +17,15 @@ namespace Ur.Data {
         }
     }
 
-    record TilePosition(int Column, int Row) {
-        public int Progress {
-            get => (Column, Row) switch {
-                (0, _) => -1,
-                (4, _) => -1,
-                (1, 0) => 12,
-                (1, 1) => 13,
-                (1, 4) => 0,
-                (1, 5) => 1,
-                (1, 6) => 2,
-                (1, 7) => 3,
-                (3, 4) => 0,
-                (3, 5) => 1,
-                (3, 6) => 2,
-                (3, 7) => 3,
-                (2, _) => 4+7-Row,
-                (3, 0) => 12,
-                (3, 1) => 13,
-                _ => 14
-            };            
-        }
-        public static TilePosition FromProgress(int progress, Player player) {
-            if (progress < 0) {
-                if (player.Index == 0) {
-                    return new TilePosition(0, 0);
-                } else {
-                    return new TilePosition(4, 0);
-                }
-            }
-            else if (progress <= 3) {
-                if (player.Index == 0) {
-                    return new TilePosition(1, 4 + progress);
-                } else {
-                    return new TilePosition(3, 4 + progress);
-                }
-            }
-            else if (progress <= 11) {
-                return new TilePosition(2, 7 - (progress - 4));
-            }
-            return new TilePosition(0, 0);
-        }
-    }
-
-    class Game : GameObject
+    public class Game : GameObject
     {
+        public string Title { get; set; } = "";
         public Player[] Players { get; } = new Player[2] {
             new Player(0),
             new Player(1) { PieceColor = "black" }
         };
+        public bool IsActive => !IsPendingPlayer;
+        public bool IsPendingPlayer => Players.Any(p => !p.HasUser);
         readonly GamePiece[] pieces;
         public GamePiece[] Pieces => pieces;
         public int ActivePlayerIndex { get; private set; }
@@ -80,7 +41,15 @@ namespace Ur.Data {
         }
         readonly Random random = new Random();
         public DateTimeOffset StartTime { get; } = DateTimeOffset.Now;
-        
+        public DateTimeOffset ActiveTime
+        {
+            get => activeTime;
+            private set
+            {
+                activeTime = value;
+                OnPropertyChanged(nameof(ActiveTime));
+            }
+        }
         public Game()
         {
             pieces = new GamePiece[7 * Players.Length];
@@ -93,6 +62,7 @@ namespace Ur.Data {
 
         string status = "";
         private int rolledPlacesToMove = 1;
+        private DateTimeOffset activeTime = DateTimeOffset.Now;
 
         public string Status
         {
@@ -109,30 +79,43 @@ namespace Ur.Data {
 
         public async Task MovePieceAsync(GamePiece piece)
         {
+            ActiveTime = DateTimeOffset.Now;
+
             if (piece.Player != Players[ActivePlayerIndex])
             {
-                Status = "Not your turn!";
+                piece.Player.GameMessage = "Not your turn!";
                 return;
             }
 
-            var newPosition = TilePosition.FromProgress(piece.Position.Progress + RolledPlacesToMove, piece.Player);
-            if (newPosition == piece.Position || !CanMoveTo(newPosition, piece.Player))
-            {
-                Status = "Can't move there!";
-                await Task.Delay(3000);
-                Status = "";
+            var newProgress = piece.Position.GetProgress() + RolledPlacesToMove;
+            var newPosition = TilePosition.FromProgress(newProgress, piece.Player) ?? piece.Position;
+
+            if (newProgress == 14) {
+                piece.Player.GameMessage = "Score!";
+                piece.Position = newPosition;
+                piece.IsOut = true;
+                piece.Player.Score++;
+                await NextTurnAsync ();
                 return;
             }
-            else
+            
+            if (newPosition == piece.Position || !CanMoveTo(newPosition, piece.Player))
             {
-                var capturedPiece = FindPieceAt(newPosition);
-                if (capturedPiece != null && capturedPiece.Player != piece.Player) {
-                    Status = $"Captured! {capturedPiece.Color}";
-                    capturedPiece.Position = new TilePosition(capturedPiece.Player.OutsideColumn,
-                                                              1 + capturedPiece.PieceIndex);
-                }
-                piece.Position = newPosition;
+                piece.Player.GameMessage = "You can't move that piece";
+                return;
             }
+
+            var capturedPiece = FindPieceAt(newPosition);
+            if (capturedPiece != null && capturedPiece.Player != piece.Player)
+            {
+                piece.Player.GameMessage = $"Captured {capturedPiece.Color}!";
+                capturedPiece.Position = new TilePosition(capturedPiece.Player.OutsideColumn,
+                                                            1 + capturedPiece.PieceIndex);
+            }
+            else {
+                piece.Player.GameMessage = "";
+            }
+            piece.Position = newPosition;
 
             await NextTurnAsync();
         }
@@ -140,7 +123,8 @@ namespace Ur.Data {
         public bool CanMoveTo(TilePosition position, Player player)
         {
             var otherPiece = FindPieceAt(position);
-            return otherPiece switch {
+            return otherPiece switch
+            {
                 null => true,
                 GamePiece p => p.Player != player
             };
@@ -154,34 +138,27 @@ namespace Ur.Data {
         async Task NextTurnAsync()
         {
             ActivePlayerIndex = (ActivePlayerIndex + 1) % Players.Length;
+            ActivePlayer.GameMessage = "";
             RolledPlacesToMove = random.Next(5);
 
-            while (RolledPlacesToMove == 0) {
-                Status = "Rolled 0, no move!";
+            while (RolledPlacesToMove == 0)
+            {
+                ActivePlayer.GameMessage = "Rolled 0, no move!";
                 await Task.Delay(3000);
-                Status = "";
                 ActivePlayerIndex = (ActivePlayerIndex + 1) % Players.Length;
+                ActivePlayer.GameMessage = "";
                 RolledPlacesToMove = random.Next(5);
             }
         }
     }
 
-    class Player : GameObject {
-        public string PieceColor { get; set; } = "white";
-        public int Index { get; }
-        public int OutsideColumn => Index == 0 ? 0 : 4;
-        public Player(int index)
-        {
-            Index = index;
-        }
-    }
-
-    class GamePiece : GameObject {
+    public class GamePiece : GameObject {
         public Player Player { get; private set; }
         public int PieceIndex { get; }
 
         public string Color => Player.PieceColor;
         public TilePosition Position { get; set; }
+        public bool IsOut { get; set; }
         public GamePiece(Player player, int pieceIndex)
         {
             Player = player;

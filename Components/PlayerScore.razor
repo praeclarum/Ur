@@ -1,0 +1,33 @@
+@using Ur.Data;
+@inject Ur.Data.UserRepo urepo;
+
+<div class="playerscore @activeClass">
+    <center>
+        <p>@Player.PieceColor: @Player.GetUserName(urepo)</p>
+        <div class="gamemessage">
+            @if (string.IsNullOrEmpty(Player.GameMessage)) {
+                <p>&nbsp;</p>
+            } else {
+                <p>@Player.GameMessage</p>
+            }
+        </div>
+        <div>
+        @if (Game.ActivePlayerIndex == Player.Index) {
+            <span class="roll">@Game.RolledPlacesToMove</span>
+        }
+        else {
+            <span class="roll">&nbsp</span>
+        }
+        </div>
+    </center>
+</div>
+
+
+@code {
+    [Parameter]
+    public Game Game { get; set; }
+    [Parameter]
+    public Player Player { get; set; }
+
+    string activeClass => Game.ActivePlayerIndex == Player.Index ? "active" : "";
+}

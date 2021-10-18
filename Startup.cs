@@ -29,6 +29,7 @@ namespace Ur
             services.AddRazorPages();
             services.AddServerSideBlazor();
             services.AddSingleton<WeatherForecastService>();
+            services.AddSingleton<UserRepo> ();
             services.AddSingleton<GameRepo> ();
         }
 

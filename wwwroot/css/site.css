@@ -60,16 +60,12 @@ a, .btn-link {
     }
 
 .gameboard {
-    background: #f5f5f5;
-    border: 1px solid #e5e5e5;
-    border-radius: 0.25rem;
-    box-shadow: 0 0.25rem 0.5rem rgba(0, 0, 0, 0.1);
-    overflow: hidden;
+    overflow: visible;
     position: relative;
 }
 
 .tile {
-    background-color: rgb(255, 237, 146);
+    background-color: rgb(254, 238, 159);
     position: absolute;
     border: solid 1px #2a2a2a;
 }
@@ -82,10 +78,42 @@ a, .btn-link {
     background-color: rgb(247, 247, 247);
     border: solid 1px #2a2a2a;
     border-radius: 50%;
-    box-shadow: 0 0.25rem 0.5rem rgba(0, 0, 0, 0.1);
+    box-shadow: 0 0.25rem 0.5rem rgba(0, 0, 0, 0.25);
     position: absolute;
+    border-style: inset;
 }
 
 .piece-black {
     background-color: rgb(0, 0, 0);    
 }
+
+.playerscores {
+    width: 100%;
+    margin-bottom: 1em;
+}
+
+.playerscore {
+    width: 40%;
+    display: inline-block;
+    border: solid 4px #fff;
+    padding: 0.5em;
+    background-color: rgba(128, 128, 128, 0.0625);
+    border-color: rgba(128, 128, 128, 0.125);
+    border-radius: 1rem;
+}
+
+.playerscore.active {
+    background-color: rgba(128, 192, 128, 0.25);
+    border-color: rgba(128, 192, 128, 0.5);
+}
+
+    .playerscore .roll {
+        font-size: 2.5em;
+        font-weight: bold;
+        margin-bottom: 0.5em;
+    }
+
+    .playerscore .gamemessage {
+        font-size: 1.0em;
+        margin-bottom: 0.5em;
+    }
