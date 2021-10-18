@@ -1,10 +1,6 @@
 @page "/game/{GameId}"
 @inject Ur.Data.GameRepo repo;
 
-<h1>@TheGame?.Title</h1>
-
-<p>Started: @TheGame?.StartTime</p>
-
 @if (TheGame == null) {
     <p>No game found</p>
 }

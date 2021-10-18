@@ -8,7 +8,7 @@
     </div>
 <div class="gameboard"
      style="width:@(gameBoardWidth)px;height:@(gameBoardHeight)px"
-     >
+     @ref="gameboard">
     @foreach (var tile in tiles) {
         <div class="tile @(tile.IsRosette()?"rosette":"")" 
             style="left:@(tileSize*tile.Column)px;top:@(tileSize*tile.Row)px;height:@(tileSize)px;width:@(tileSize)px"
@@ -26,6 +26,8 @@
 @code {
     [Parameter]
     public Game Game { get; set; }
+
+    ElementReference gameboard;
 
     class Tile : ITilePosition {
         public int Column { get; set; }

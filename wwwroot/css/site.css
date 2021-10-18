@@ -93,13 +93,17 @@ a, .btn-link {
 }
 
 .playerscore {
-    width: 40%;
+    width: 45%;
     display: inline-block;
     border: solid 4px #fff;
     padding: 0.5em;
     background-color: rgba(128, 128, 128, 0.0625);
     border-color: rgba(128, 128, 128, 0.125);
     border-radius: 1rem;
+}
+
+.playerscore p {
+    margin: 0;
 }
 
 .playerscore.active {
@@ -116,4 +120,6 @@ a, .btn-link {
     .playerscore .gamemessage {
         font-size: 1.0em;
         margin-bottom: 0.5em;
+        font-size: 80%;
+        height: 1em;
     }
