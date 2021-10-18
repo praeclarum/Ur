@@ -57,11 +57,11 @@ namespace Ur.Data
             {
                 pieces[i] = new GamePiece(Players[i / 7], i % 7);
             }
-            rolledPlacesToMove = random.Next(5);
+            Roll();
         }
 
         string status = "";
-        private int rolledPlacesToMove = 1;
+        private int rolledPlacesToMove = 0;
         private DateTimeOffset activeTime = DateTimeOffset.Now;
 
         public string Status
@@ -99,9 +99,15 @@ namespace Ur.Data
                 return;
             }
             
-            if (newPosition == piece.Position || !CanMoveTo(newPosition, piece.Player))
+            if (newPosition == piece.Position)
             {
                 piece.Player.GameMessage = "You can't move that piece";
+                return;
+            }
+
+            if (!CanMoveTo(newPosition, piece.Player))
+            {
+                piece.Player.GameMessage = "Destination is occupied";
                 return;
             }
 
@@ -139,7 +145,7 @@ namespace Ur.Data
         {
             ActivePlayerIndex = (ActivePlayerIndex + 1) % Players.Length;
             ActivePlayer.GameMessage = "";
-            RolledPlacesToMove = random.Next(5);
+            Roll();
 
             while (RolledPlacesToMove == 0)
             {
@@ -147,8 +153,16 @@ namespace Ur.Data
                 await Task.Delay(3000);
                 ActivePlayerIndex = (ActivePlayerIndex + 1) % Players.Length;
                 ActivePlayer.GameMessage = "";
-                RolledPlacesToMove = random.Next(5);
+                Roll();
             }
+        }
+
+        void Roll() {
+            var d0 = random.Next(2);
+            var d1 = random.Next(2);
+            var d2 = random.Next(2);
+            var d3 = random.Next(2);
+            RolledPlacesToMove = d0 + d1 + d2 + d3;
         }
     }
 
