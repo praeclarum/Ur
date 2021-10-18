@@ -64,6 +64,15 @@ namespace Ur.Data
         private int rolledPlacesToMove = 0;
         private DateTimeOffset activeTime = DateTimeOffset.Now;
 
+        public DateTimeOffset? EndTime { get; private set; }
+        public bool IsCompleted => EndTime.HasValue;
+
+        void GameOver(Player winner)
+        {
+            Status = $"{winner.InitialUserName} won!";
+            EndTime = DateTimeOffset.Now;
+        }
+
         public string Status
         {
             get => status;
@@ -81,44 +90,52 @@ namespace Ur.Data
         {
             ActiveTime = DateTimeOffset.Now;
 
-            if (piece.Player != Players[ActivePlayerIndex])
-            {
-                piece.Player.GameMessage = "Not your turn!";
-                return;
+            var (movement, newPosition) = GetPieceMovement(piece);
+
+            switch (movement) {
+                case Movement.NoNotTurn:
+                    piece.Player.GameMessage = "Not your turn!";
+                    return;
+                case Movement.NoCantMove:
+                    piece.Player.GameMessage = "You can't move that piece";
+                    return;
+                case Movement.NoOccupied:
+                    piece.Player.GameMessage = "Destination is occupied";
+                    return;
+                case Movement.NoRosette:
+                    piece.Player.GameMessage = "Rosettes are protected";
+                    return;
+                case Movement.NoRolling:
+                    piece.Player.GameMessage = "Wait for roll to finish";
+                    return;
+                case Movement.OKScore:
+                    piece.Player.GameMessage = "Score!";
+                    piece.Position = newPosition;
+                    piece.IsOut = true;
+                    piece.Player.Score++;
+                    if (piece.Player.Score == 7)
+                    {
+                        piece.Player.GameMessage = "You win!";
+                        GameOver(piece.Player);
+                    }
+                    else {
+                        ActivePlayerIndex = (ActivePlayerIndex + 1) % Players.Length;
+                        await NextTurnAsync ();
+                    }
+                    return;
             }
 
             var newProgress = piece.Position.GetProgress() + RolledPlacesToMove;
-            var newPosition = TilePosition.FromProgress(newProgress, piece.Player) ?? piece.Position;
 
-            if (newProgress == 14) {
-                piece.Player.GameMessage = "Score!";
-                piece.Position = newPosition;
-                piece.IsOut = true;
-                piece.Player.Score++;
-                ActivePlayerIndex = (ActivePlayerIndex + 1) % Players.Length;
-                await NextTurnAsync ();
-                return;
-            }
-            
-            if (newPosition == piece.Position)
-            {
-                piece.Player.GameMessage = "You can't move that piece";
-                return;
-            }
-
-            if (!CanMoveTo(newPosition, piece.Player))
-            {
-                piece.Player.GameMessage = "Destination is occupied";
-                return;
-            }
-
-            var capturedPiece = FindPieceAt(newPosition);
-            if (capturedPiece != null && capturedPiece.Player != piece.Player)
-            {
-                piece.Player.GameMessage = $"Captured {capturedPiece.Color}!";
-                capturedPiece.Position = new TilePosition(capturedPiece.Player.OutsideColumn,
-                                                            1 + capturedPiece.PieceIndex);
-            }
+            if (movement == Movement.OKCapture) {
+                var capturedPiece = FindPieceAt(newPosition);
+                if (capturedPiece != null)
+                {
+                    piece.Player.GameMessage = $"Captured {capturedPiece.Color}!";
+                    capturedPiece.Position = new TilePosition(capturedPiece.Player.OutsideColumn,
+                                                                1 + capturedPiece.PieceIndex);
+                }
+            }            
             else {
                 piece.Player.GameMessage = "";
             }
@@ -142,6 +159,83 @@ namespace Ur.Data
             };
         }
 
+        enum Movement {
+            NoNotTurn = 0,
+            NoCantMove = 1,
+            NoOccupied = 2,
+            NoRosette = 3,
+            NoRolling = 4,
+            OK = 100,
+            OKScore = 101,
+            OKCapture = 102,
+        }
+
+        (Movement, TilePosition) GetPieceMovement(GamePiece piece)
+        {
+            if (RolledPlacesToMove < 0)
+                return (Movement.NoRolling, piece.Position);
+
+            if (piece.Player != Players[ActivePlayerIndex])
+            {
+                return (Movement.NoNotTurn, piece.Position);
+            }
+
+            var newProgress = piece.Position.GetProgress() + RolledPlacesToMove;
+            var newPosition = TilePosition.FromProgress(newProgress, piece.Player) ?? piece.Position;
+
+            if (newProgress == 14) {
+                return (Movement.OKScore, newPosition);
+            }
+            
+            if (newPosition == piece.Position)
+            {
+                return (Movement.NoCantMove, newPosition);
+            }
+
+            if (!CanMoveTo(newPosition, piece.Player))
+            {
+                return (Movement.NoOccupied, newPosition);
+            }
+
+            var capturedPiece = FindPieceAt(newPosition);
+            if (capturedPiece != null && capturedPiece.Player != piece.Player)
+            {
+                if (newPosition.IsRosette()) {
+                    return (Movement.NoRosette, newPosition);
+                }
+                else {
+                    return (Movement.OKCapture, newPosition);
+                }
+            }
+
+            return (Movement.OK, newPosition);
+        }
+
+        bool CanMovePiece(GamePiece piece)
+        {
+            return GetPieceMovement(piece).Item1 switch
+            {
+                Movement.OK => true,
+                Movement.OKCapture => true,
+                Movement.OKScore => true,
+                _ => false
+            };
+        }
+
+        bool CanMovePiece()
+        {
+            var player = ActivePlayer;
+            foreach (var piece in Pieces)
+            {
+                if (piece.Player != player || piece.IsOut)
+                    continue;
+                if (CanMovePiece(piece)) {
+                    return true;                
+                }
+            }
+            return false;
+        }
+
         GamePiece? FindPieceAt(TilePosition position)
         {
             return pieces.FirstOrDefault(p => p.Position == position);
@@ -152,9 +246,14 @@ namespace Ur.Data
             ActivePlayer.GameMessage = message;
             await RollAsync();
 
-            while (RolledPlacesToMove == 0)
+            while (RolledPlacesToMove == 0 || !CanMovePiece())
             {
-                ActivePlayer.GameMessage = "Rolled 0, no move!";
+                if (RolledPlacesToMove == 0) {
+                    ActivePlayer.GameMessage = "Rolled 0, no move.";
+                }
+                else {
+                    ActivePlayer.GameMessage = "No pieces can move.";
+                }
                 await Task.Delay(2000);
                 ActivePlayerIndex = (ActivePlayerIndex + 1) % Players.Length;
                 ActivePlayer.GameMessage = "";
@@ -164,7 +263,7 @@ namespace Ur.Data
 
         async Task RollAsync() {
             RolledPlacesToMove = -1;
-            await Task.Delay(1000);
+            await Task.Delay(250 + random.Next(1000));
             Roll();
         }
 

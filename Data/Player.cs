@@ -8,6 +8,7 @@ namespace Ur.Data
         public int Index { get; }
         public int OutsideColumn => Index == 0 ? 0 : 4;
         public string? UserId {get; set;} = "";
+        public string? InitialUserName {get; set;} = "";
         public string GameMessage { get; set; } = "";
         public int Score { get; set; } = 0;
         public string? GetUserName(UserRepo repo) => 

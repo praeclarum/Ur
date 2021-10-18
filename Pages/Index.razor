@@ -32,5 +32,17 @@
 }
 </ul>
 
+<h2 style="margin-top:2em">Completed Games</h2>
+<ul>
+@foreach (var game in repo.CompletedGames.OrderByDescending(x => x.EndTime.Value)) {
+    var now = DateTimeOffset.Now;
+    var time = now - game.ActiveTime;
+    var timeStr = $"{time.TotalMinutes:0} minutes ago";
+    <li>
+        <a href="/game/@game.Id">@game.Title (@timeStr)</a>
+    </li>
+}
+</ul>
+
 @code {
 }
