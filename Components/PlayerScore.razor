@@ -13,7 +13,12 @@
         </div>
         <div>
         @if (Game.ActivePlayerIndex == Player.Index) {
-            <span class="roll">@Game.RolledPlacesToMove</span>
+            if (Game.RolledPlacesToMove >= 0) {
+                <span class="roll">@Game.RolledPlacesToMove</span>
+            }
+            else {
+                <span class="roll">...</span>
+            }
         }
         else {
             <span class="roll">&nbsp</span>

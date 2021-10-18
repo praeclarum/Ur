@@ -10,7 +10,7 @@
      style="width:@(gameBoardWidth)px;height:@(gameBoardHeight)px"
      >
     @foreach (var tile in tiles) {
-        <div class="tile @(tile.Rosette?"rosette":"")" 
+        <div class="tile @(tile.IsRosette()?"rosette":"")" 
             style="left:@(tileSize*tile.Column)px;top:@(tileSize*tile.Row)px;height:@(tileSize)px;width:@(tileSize)px"
             >@tile.Column, @tile.Row<br/>@tile.GetProgress()</div> 
     }
@@ -30,7 +30,6 @@
     class Tile : ITilePosition {
         public int Column { get; set; }
         public int Row { get; set; }
-        public bool Rosette;
     }
 
     private int currentCount = 0;
@@ -43,13 +42,13 @@
         new Tile { Column = 1, Row = 0 },
         new Tile { Column = 2, Row = 0 },
         new Tile { Column = 3, Row = 0 },
-        new Tile { Column = 1, Row = 1, Rosette = true },
+        new Tile { Column = 1, Row = 1 },
         new Tile { Column = 2, Row = 1 },
-        new Tile { Column = 3, Row = 1, Rosette = true },
+        new Tile { Column = 3, Row = 1 },
         new Tile { Column = 2, Row = 2 },
         new Tile { Column = 2, Row = 3 },
         new Tile { Column = 1, Row = 4 },
-        new Tile { Column = 2, Row = 4, Rosette = true  },
+        new Tile { Column = 2, Row = 4  },
         new Tile { Column = 3, Row = 4 },
         new Tile { Column = 1, Row = 5 },
         new Tile { Column = 2, Row = 5 },
@@ -57,9 +56,9 @@
         new Tile { Column = 1, Row = 6 },
         new Tile { Column = 2, Row = 6 },
         new Tile { Column = 3, Row = 6 },
-        new Tile { Column = 1, Row = 7, Rosette = true  },
+        new Tile { Column = 1, Row = 7  },
         new Tile { Column = 2, Row = 7 },
-        new Tile { Column = 3, Row = 7, Rosette = true  },
+        new Tile { Column = 3, Row = 7  },
     };
 
 

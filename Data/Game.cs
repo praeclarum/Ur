@@ -95,6 +95,7 @@ namespace Ur.Data
                 piece.Position = newPosition;
                 piece.IsOut = true;
                 piece.Player.Score++;
+                ActivePlayerIndex = (ActivePlayerIndex + 1) % Players.Length;
                 await NextTurnAsync ();
                 return;
             }
@@ -122,8 +123,13 @@ namespace Ur.Data
                 piece.Player.GameMessage = "";
             }
             piece.Position = newPosition;
-
-            await NextTurnAsync();
+            if (piece.Position.IsRosette()) {
+                await NextTurnAsync($"You get another turn!");
+            }
+            else {
+                ActivePlayerIndex = (ActivePlayerIndex + 1) % Players.Length;
+                await NextTurnAsync();
+            }
         }
 
         public bool CanMoveTo(TilePosition position, Player player)
@@ -141,20 +147,25 @@ namespace Ur.Data
             return pieces.FirstOrDefault(p => p.Position == position);
         }
 
-        async Task NextTurnAsync()
+        async Task NextTurnAsync(string message = "")
         {
-            ActivePlayerIndex = (ActivePlayerIndex + 1) % Players.Length;
-            ActivePlayer.GameMessage = "";
-            Roll();
+            ActivePlayer.GameMessage = message;
+            await RollAsync();
 
             while (RolledPlacesToMove == 0)
             {
                 ActivePlayer.GameMessage = "Rolled 0, no move!";
-                await Task.Delay(3000);
+                await Task.Delay(2000);
                 ActivePlayerIndex = (ActivePlayerIndex + 1) % Players.Length;
                 ActivePlayer.GameMessage = "";
-                Roll();
+                await RollAsync();
             }
+        }
+
+        async Task RollAsync() {
+            RolledPlacesToMove = -1;
+            await Task.Delay(1000);
+            Roll();
         }
 
         void Roll() {
